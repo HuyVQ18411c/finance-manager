@@ -1,0 +1,16 @@
+import os
+
+
+DATABASE_HOST = os.environ.get('DATABASE_HOST', 'localhost')
+DATABASE_USERNAME = os.environ.get('DATABASE_USERNAME', 'admin')
+DATABASE_PORT = int(os.environ.get('DATABASE_PORT', '45432'))
+DATABASE_PASSWORD = os.environ.get('DATABASE_PASSWORD', 'EDYRcmEpuF8')
+DATABASE_NAME = os.environ.get('DATABASE_NAME', 'finance')
+
+DB_URL = 'postgresql://{username}:{password}@{host}:{port}/{name}'.format(
+    username=DATABASE_USERNAME,
+    password=DATABASE_PASSWORD,
+    host=DATABASE_HOST,
+    port=DATABASE_PORT,
+    name=DATABASE_NAME
+)
