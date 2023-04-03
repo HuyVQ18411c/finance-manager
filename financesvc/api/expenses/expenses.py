@@ -2,7 +2,7 @@ from fastapi import APIRouter
 from starlette.responses import JSONResponse
 
 from financesvc.api.expenses.dto import ExpenseDto
-from financesvc.domain.repositories import ExpenseRepository
+from financesvc.domain.repositories import ExpenseRepository, CategoryRepository
 from financesvc.settings import DB_URL
 
 router = APIRouter()

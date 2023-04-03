@@ -3,7 +3,7 @@ from datetime import datetime
 from sqlalchemy import create_engine, select, update
 from sqlalchemy.orm import Session
 
-from financesvc.domain.models import Expense
+from financesvc.domain.models import Expense, Category
 
 
 class BaseRepository:
@@ -30,7 +30,10 @@ class BaseRepository:
 
     def get_many(self, *args, **kwargs):
         stmt = select(self.MODEL).where(*args, **kwargs)
-        return self._session.execute(stmt).all()
+        with self._session as session:
+            rows = session.execute(stmt).all()
+            result = [row[0].as_dict() for row in rows]
+        return result
 
     def get_one(self, *args, **kwargs):
         stmt = select(self.MODEL).where(*args, **kwargs)
@@ -81,3 +84,10 @@ class ExpenseRepository(BaseRepository):
             return
 
         return
+
+
+class CategoryRepository(BaseRepository):
+    MODEL = Category
+
+    def get_categories(self):
+        return self.get_many()

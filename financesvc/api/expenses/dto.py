@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -8,7 +9,6 @@ class ExpenseDto(BaseModel):
     amount: float
     category_id: int
 
-    description: str | None = ''
-    spent_date: str | None = datetime.now().strftime('%Y-%m-%d')
-    created_by_id: int | None = None
-    is_archived: bool | None = False
+    description: Optional[str | None] = ''
+    spent_date: Optional[str | None] = datetime.now().strftime('%Y-%m-%d')
+    created_by_id: Optional[int | None] = None

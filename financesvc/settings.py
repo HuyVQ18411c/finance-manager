@@ -14,3 +14,5 @@ DB_URL = 'postgresql://{username}:{password}@{host}:{port}/{name}'.format(
     port=DATABASE_PORT,
     name=DATABASE_NAME
 )
+
+ALLOW_ORIGINS = ['http://127.0.0.1:5500']
