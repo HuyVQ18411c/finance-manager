@@ -1,7 +1,10 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
-from sqlalchemy import Integer, DateTime, String, ForeignKey, Text, Boolean, Float
+import bcrypt
+from sqlalchemy import Integer, DateTime, String, ForeignKey, Text, Float, Date
 from sqlalchemy.orm import DeclarativeBase, mapped_column, Mapped, relationship
+
+from financesvc.utils.code_generator import hash_password
 
 
 class Base(DeclarativeBase):
@@ -21,7 +24,7 @@ class Base(DeclarativeBase):
 class BaseModel(Base):
     __abstract__ = True
 
-    created_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.now())
+    created_date: Mapped[datetime] = mapped_column(DateTime, default=datetime.now(tz=timezone.utc))
 
 
 class User(BaseModel):
@@ -29,9 +32,14 @@ class User(BaseModel):
 
     code: Mapped[str] = mapped_column(String(10), nullable=True)
 
+    email: Mapped[str] = mapped_column(String(100), nullable=True)
+
     password: Mapped[str] = mapped_column(Text, nullable=True)
 
     expenses: Mapped[list['Expense']] = relationship(back_populates='created_by')
+
+    def validate_password(self, password: str):
+        return bcrypt.checkpw(password.encode('utf-8'), bytes(self.password, 'utf-8'))
 
 
 class Category(Base):
@@ -52,7 +60,7 @@ class Expense(BaseModel):
 
     amount: Mapped[float] = mapped_column(Float, nullable=False)
 
-    spent_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.now())
+    spent_date: Mapped[datetime] = mapped_column(Date)
 
     category_id: Mapped[int] = mapped_column(ForeignKey('categories.id'))
     category: Mapped[Category] = relationship(back_populates='expenses')
@@ -60,5 +68,8 @@ class Expense(BaseModel):
     created_by_id: Mapped[int] = mapped_column(ForeignKey('users.id'), nullable=True)
     created_by: Mapped[User] = relationship(back_populates='expenses')
 
-    last_updated_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), onupdate=datetime.now(), nullable=True)
-    is_archived: Mapped[bool] = mapped_column(Boolean, default=False)
+    last_updated_date: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        onupdate=datetime.now(tz=timezone.utc),
+        nullable=True
+    )

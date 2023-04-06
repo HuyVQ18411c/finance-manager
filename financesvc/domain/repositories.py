@@ -3,7 +3,8 @@ from datetime import datetime
 from sqlalchemy import create_engine, select, update
 from sqlalchemy.orm import Session
 
-from financesvc.domain.models import Expense, Category
+from financesvc.domain.models import Expense, Category, User
+from financesvc.utils.code_generator import generate_user_code, hash_password
 
 
 class BaseRepository:
@@ -28,14 +29,16 @@ class BaseRepository:
             session.add_all(instances)
             session.commit()
 
-    def get_many(self, *args, **kwargs):
-        stmt = select(self.MODEL).where(*args, **kwargs)
-        with self._session as session:
-            rows = session.execute(stmt).all()
-            result = [row[0].as_dict() for row in rows]
+    def get_many(self, stmt=None, *args, **kwargs):
+        if stmt is None:
+            stmt = select(self.MODEL).where(*args, **kwargs)
+
+        rows = self._session.execute(stmt).all()
+        result = [row[0].as_dict() for row in rows]
+
         return result
 
-    def get_one(self, *args, **kwargs):
+    def get_one(self, *args, **kwargs) -> MODEL:
         stmt = select(self.MODEL).where(*args, **kwargs)
         return self._session.scalars(stmt).first()
 
@@ -48,16 +51,21 @@ class BaseRepository:
 class ExpenseRepository(BaseRepository):
     MODEL = Expense
 
+    def get_expenses(self, user_code: str = ''):
+        stmt = select(Expense).join(Expense.created_by).where(User.code == user_code)
+        expenses = self.get_many(stmt)
+        return expenses
+
     def create_expense(
         self,
         title: str,
         amount: float,
         category_id: int,
         description: str = '',
-        spent_date: datetime = datetime.now(),
+        spent_date: datetime = datetime.now().strftime('%Y-%m-%d'),
         created_by_id: int = None,
-        is_archived: bool = False
     ) -> dict:
+        spent_date = spent_date.strftime('%Y-%m-%d')
         new_expense = Expense(
             title=title,
             amount=amount,
@@ -65,7 +73,6 @@ class ExpenseRepository(BaseRepository):
             spent_date=spent_date,
             category_id=category_id,
             created_by_id=created_by_id,
-            is_archived=is_archived
         )
         return self.create(new_expense)
 
@@ -91,3 +98,28 @@ class CategoryRepository(BaseRepository):
 
     def get_categories(self):
         return self.get_many()
+
+
+class UserRepository(BaseRepository):
+    MODEL = User
+
+    def get_user(self, user_code: str = '', email: str = '') -> User:
+        if user_code:
+            return self.get_one(User.code == user_code)
+
+        if email:
+            return self.get_one(User.email == email)
+
+    def create_user(self, email: str = '', password: str = '') -> dict:
+        while True:
+            code = generate_user_code()
+            if not self.get_user(code):
+                break
+
+        new_user = User(
+            code=code,
+            email=email,
+            password=hash_password(password).decode('utf-8')
+        )
+
+        return self.create(new_user)

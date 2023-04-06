@@ -11,4 +11,3 @@ class ExpenseDto(BaseModel):
 
     description: Optional[str | None] = ''
     spent_date: Optional[str | None] = datetime.now().strftime('%Y-%m-%d')
-    created_by_id: Optional[int | None] = None

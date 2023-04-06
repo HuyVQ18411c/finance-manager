@@ -1,8 +1,8 @@
 """init database
 
-Revision ID: db8872bbc827
+Revision ID: c99f99232f8d
 Revises: 
-Create Date: 2023-04-02 23:31:26.695567
+Create Date: 2023-04-04 21:41:07.205388
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'db8872bbc827'
+revision = 'c99f99232f8d'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -26,8 +26,9 @@ def upgrade() -> None:
     )
     op.create_table('users',
     sa.Column('code', sa.String(length=10), nullable=True),
+    sa.Column('email', sa.String(length=100), nullable=True),
     sa.Column('password', sa.Text(), nullable=True),
-    sa.Column('created_date', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('created_date', sa.DateTime(), nullable=False),
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
@@ -35,12 +36,11 @@ def upgrade() -> None:
     sa.Column('title', sa.String(length=100), nullable=False),
     sa.Column('description', sa.String(length=500), nullable=True),
     sa.Column('amount', sa.Float(), nullable=False),
-    sa.Column('spent_date', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('spent_date', sa.Date(), nullable=False),
     sa.Column('category_id', sa.Integer(), nullable=False),
     sa.Column('created_by_id', sa.Integer(), nullable=True),
     sa.Column('last_updated_date', sa.DateTime(timezone=True), nullable=True),
-    sa.Column('is_archived', sa.Boolean(), nullable=False),
-    sa.Column('created_date', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('created_date', sa.DateTime(), nullable=False),
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.ForeignKeyConstraint(['category_id'], ['categories.id'], ),
     sa.ForeignKeyConstraint(['created_by_id'], ['users.id'], ),
