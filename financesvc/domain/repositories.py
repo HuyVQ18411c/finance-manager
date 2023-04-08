@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from sqlalchemy import create_engine, select, update
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from financesvc.domain.models import Expense, Category, User
 from financesvc.utils.code_generator import generate_user_code, hash_password
@@ -22,7 +22,7 @@ class BaseRepository:
             session.add(instance)
             session.commit()
             session.refresh(instance)
-            return instance.as_dict()
+            return instance
 
     def create_many(self, instances: list):
         with self._session as session:
@@ -33,12 +33,11 @@ class BaseRepository:
         if stmt is None:
             stmt = select(self.MODEL).where(*args, **kwargs)
 
-        rows = self._session.execute(stmt).all()
-        result = [row[0].as_dict() for row in rows]
+        rows = self._session.scalars(stmt).all()
 
-        return result
+        return rows
 
-    def get_one(self, *args, **kwargs) -> MODEL:
+    def get_one(self, *args, **kwargs):
         stmt = select(self.MODEL).where(*args, **kwargs)
         return self._session.scalars(stmt).first()
 
@@ -51,10 +50,21 @@ class BaseRepository:
 class ExpenseRepository(BaseRepository):
     MODEL = Expense
 
-    def get_expenses(self, user_code: str = ''):
-        stmt = select(Expense).join(Expense.created_by).where(User.code == user_code)
+    def get_expenses(self, user_code: str) -> list[Expense]:
+        stmt = select(Expense).join(
+            Expense.category
+        ).join(
+            Expense.created_by
+        ).where(
+            User.code == user_code
+        ).options(joinedload(Expense.category)).order_by(Expense.spent_date)
+
         expenses = self.get_many(stmt)
+
         return expenses
+
+    def get_expense_by_id(self, expense_id: int, user_code: str):
+        pass
 
     def create_expense(
         self,
@@ -89,8 +99,10 @@ class ExpenseRepository(BaseRepository):
         expense = self.get_one(Expense.id == expense_id)
         if not expense:
             return
-
         return
+
+    def delete_expense(self, expense_id):
+        pass
 
 
 class CategoryRepository(BaseRepository):

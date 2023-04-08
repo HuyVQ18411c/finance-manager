@@ -12,6 +12,7 @@ EXPENSE_EXCLUDE_FIELDS = ['created_date', 'last_updated_date']
 
 router = APIRouter()
 expense_repo = ExpenseRepository(DB_URL)
+category_repo = CategoryRepository(DB_URL)
 
 
 @router.get('/')
@@ -19,10 +20,16 @@ def get_expenses(request: Request):
     data = expense_repo.get_expenses(request.state.user.code)
     serialized_data = Serializer(
         data,
-        exclude_fields=EXPENSE_EXCLUDE_FIELDS
+        exclude_fields=EXPENSE_EXCLUDE_FIELDS,
+        include_relationship=True
     ).to_representation()
 
     return JSONResponse(status_code=200, content=serialized_data)
+
+
+@router.get('/{expense_id}')
+def delete_expense(request: Request):
+    pass
 
 
 @router.post('/')
@@ -45,6 +52,25 @@ def add_expense(expense_data: ExpenseDto, request: Request):
     )
 
 
-@router.get('/statistic/{user_code}')
-def get_dashboard(user_code: str):
-    return
+@router.get('/statistic/')
+def get_dashboard(request: Request):
+    user = request.state.user
+    expenses = expense_repo.get_expenses(user.code)
+
+    data = {'bar': {}, 'line': {}}
+
+    # Collect data for bar chart
+    for expense in expenses:
+        # Spent amount collected by category
+        if not data['bar'].get(expense.category.name, None):
+            data['bar'][expense.category.name] = expense.amount
+        else:
+            data['bar'][expense.category.name] += expense.amount
+
+        # Spent amount collected by day
+        if not data['line'].get(str(expense.spent_date.strftime('%d-%m')), None):
+            data['line'][str(expense.spent_date.strftime('%d-%m'))] = expense.amount
+        else:
+            data['line'][str(expense.spent_date.strftime('%d-%m'))] += expense.amount
+
+    return JSONResponse(status_code=200, content=data)
