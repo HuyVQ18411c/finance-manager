@@ -10,5 +10,5 @@ class UserDto(BaseModel):
 
 
 class CreateUserDto(BaseModel):
-    email: Optional[str] = ''
-    password: Optional[str] = ''
+    email: Optional[str] = None
+    password: Optional[str] = None

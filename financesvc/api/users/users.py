@@ -6,6 +6,7 @@ from starlette.responses import JSONResponse
 from financesvc.api.users.dto import UserDto, CreateUserDto
 from financesvc.domain.repositories import UserRepository
 from financesvc.settings import DB_URL
+from financesvc.utils.serializers import Serializer
 from financesvc.utils.utils import is_valid_email
 
 logger = logging.getLogger(__name__)
@@ -27,20 +28,16 @@ def create_new_user(data: CreateUserDto):
         password=data.password
     )
 
-    logger.info('A new user created with code: %s', new_user['code'])
+    logger.info('A new user created with code: %s', new_user.code)
 
     return JSONResponse(
         status_code=201,
-        content={
-            'user_code': new_user['code'],
-            'email': new_user['email']
-        }
+        content=Serializer(new_user, fields=['code', 'email']).to_representation()
     )
 
 
 @router.post('/ping')
 def ping_user(data: UserDto):
-
     if not data.user_code and not data.email:
         return JSONResponse(status_code=400, content={'success': False})
 
@@ -56,8 +53,7 @@ def ping_user(data: UserDto):
                     status_code=200,
                     content={
                         'success': True,
-                        'email': matched_user.email,
-                        'user_code': matched_user.code
+                        **Serializer(matched_user).to_representation()
                     }
                 )
             else:
@@ -73,11 +69,8 @@ def ping_user(data: UserDto):
                 status_code=200,
                 content={
                     'success': True,
-                    'email': matched_user.email,
-                    'user_code': matched_user.code
+                    **Serializer(matched_user).to_representation()
                 }
             )
     else:
         return JSONResponse(status_code=404, content={'success': False})
-
-    return JSONResponse(status_code=400, content={'success': False})

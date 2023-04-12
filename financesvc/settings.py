@@ -15,6 +15,12 @@ DB_URL = 'postgresql://{username}:{password}@{host}:{port}/{name}'.format(
     name=DATABASE_NAME
 )
 
-ALLOW_ORIGINS = ['http://127.0.0.1:5500', 'http://127.0.0.1:8100', 'http://localhost:8100']
+ALLOW_ORIGINS = [
+    'http://127.0.0.1:5500',
+    'http://localhost:5500'
+
+    'http://127.0.0.1:8100',
+    'http://localhost:8100',
+]
 
 USER_CODE_LENGTH = int(os.environ.get('USER_CODE_LENGTH', '6'))

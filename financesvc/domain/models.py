@@ -4,8 +4,6 @@ import bcrypt
 from sqlalchemy import Integer, DateTime, String, ForeignKey, Text, Float, Date
 from sqlalchemy.orm import DeclarativeBase, mapped_column, Mapped, relationship
 
-from financesvc.utils.code_generator import hash_password
-
 
 class Base(DeclarativeBase):
     __abstract__ = True
@@ -37,6 +35,7 @@ class User(BaseModel):
     password: Mapped[str] = mapped_column(Text, nullable=True)
 
     expenses: Mapped[list['Expense']] = relationship(back_populates='created_by')
+    budgets: Mapped[list['Budget']] = relationship(back_populates='created_by')
 
     def validate_password(self, password: str):
         return bcrypt.checkpw(password.encode('utf-8'), bytes(self.password, 'utf-8'))
@@ -47,7 +46,7 @@ class Category(Base):
 
     name: Mapped[str] = mapped_column(String(150), nullable=False)
 
-    abbr_name: Mapped[str] = mapped_column(String(10), nullable=False)
+    abbr_name: Mapped[str] = mapped_column(String(30), nullable=False)
 
     expenses: Mapped[list['Expense']] = relationship(back_populates='category')
 
@@ -73,3 +72,25 @@ class Expense(BaseModel):
         onupdate=datetime.now(tz=timezone.utc),
         nullable=True
     )
+
+
+class MoneySource(Base):
+    __tablename__ = 'money_sources'
+
+    name: Mapped[str] = mapped_column(String(150), nullable=False)
+    abbr_name: Mapped[str] = mapped_column(String(30), nullable=False)
+    budgets: Mapped[list['Budget']] = relationship(back_populates='source')
+
+
+class Budget(BaseModel):
+    __tablename__ = 'budgets'
+
+    amount: Mapped[float] = mapped_column(Float, nullable=False)
+    receive_date: Mapped[datetime] = mapped_column(Date)
+    notes: Mapped[str] = mapped_column(String(500), nullable=True)
+
+    created_by_id: Mapped[int] = mapped_column(ForeignKey('users.id'), nullable=True)
+    created_by: Mapped[User] = relationship(back_populates='budgets')
+
+    source_id: Mapped[int] = mapped_column(ForeignKey('money_sources.id'))
+    source: Mapped[MoneySource] = relationship(back_populates='budgets')

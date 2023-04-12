@@ -1,4 +1,5 @@
-from datetime import datetime
+import calendar
+from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Request
 from starlette.responses import JSONResponse
@@ -18,6 +19,7 @@ category_repo = CategoryRepository(DB_URL)
 @router.get('/')
 def get_expenses(request: Request):
     data = expense_repo.get_expenses(request.state.user.code)
+
     serialized_data = Serializer(
         data,
         exclude_fields=EXPENSE_EXCLUDE_FIELDS,
@@ -57,20 +59,30 @@ def get_dashboard(request: Request):
     user = request.state.user
     expenses = expense_repo.get_expenses(user.code)
 
-    data = {'bar': {}, 'line': {}}
+    data = {'bar': {}, 'line': {}, 'pie': {}}
+    days = (expenses[-1].spent_date - expenses[0].spent_date).days
 
-    # Collect data for bar chart
+    for i in range(days + 1):
+        # Create initial amount for each day
+        data['line'][(expenses[0].spent_date + timedelta(days=i)).strftime('%d-%m')] = 0
+
+    for k in range(expenses[0].spent_date.month, 13):
+        data['bar'][calendar.month_abbr[k]] = 0
+
     for expense in expenses:
         # Spent amount collected by category
-        if not data['bar'].get(expense.category.name, None):
-            data['bar'][expense.category.name] = expense.amount
+        if not data['pie'].get(expense.category.name, None):
+            data['pie'][expense.category.name] = expense.amount
         else:
-            data['bar'][expense.category.name] += expense.amount
+            data['pie'][expense.category.name] += expense.amount
 
         # Spent amount collected by day
         if not data['line'].get(str(expense.spent_date.strftime('%d-%m')), None):
             data['line'][str(expense.spent_date.strftime('%d-%m'))] = expense.amount
         else:
             data['line'][str(expense.spent_date.strftime('%d-%m'))] += expense.amount
+
+        # Spent amount by month
+        data['bar'][calendar.month_abbr[expense.spent_date.month]] += expense.amount
 
     return JSONResponse(status_code=200, content=data)

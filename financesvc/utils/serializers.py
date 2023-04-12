@@ -75,17 +75,22 @@ class Serializer:
         return data
 
     def to_representation(self) -> dict | list[dict]:
+        if not self.data:
+            return []
+
         data: dict | list[dict] = self.to_dict()
 
         if isinstance(data, dict):
             if self.fields:
-                for field in self.fields:
-                    if field not in data.keys():
+                # Since del will change keys() values during iteration
+                # Use list to enforce a copy of that list
+                for field in list(data.keys()):
+                    if field not in self.fields:
                         del data[field]
 
             elif self.exclude_fields:
-                for field in self.fields:
-                    if field in data.keys():
+                for field in self.exclude_fields:
+                    if field in list(data.keys()):
                         del data[field]
 
             for key, value in data.items():

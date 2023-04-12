@@ -122,7 +122,7 @@ class UserRepository(BaseRepository):
         if email:
             return self.get_one(User.email == email)
 
-    def create_user(self, email: str = '', password: str = '') -> dict:
+    def create_user(self, email: str = '', password: str = '') -> User:
         while True:
             code = generate_user_code()
             if not self.get_user(code):
