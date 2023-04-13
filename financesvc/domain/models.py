@@ -89,6 +89,12 @@ class Budget(BaseModel):
     receive_date: Mapped[datetime] = mapped_column(Date)
     notes: Mapped[str] = mapped_column(String(500), nullable=True)
 
+    last_updated_date: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        onupdate=datetime.now(tz=timezone.utc),
+        nullable=True
+    )
+
     created_by_id: Mapped[int] = mapped_column(ForeignKey('users.id'), nullable=True)
     created_by: Mapped[User] = relationship(back_populates='budgets')
 

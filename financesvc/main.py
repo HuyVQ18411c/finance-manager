@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from starlette.responses import JSONResponse
 
+from financesvc.api.budgets import budgets
 from financesvc.api.expenses import expenses, categories
 from financesvc.api.users import users
 from financesvc.domain.repositories import UserRepository
@@ -40,3 +40,4 @@ async def get_request_user(request: Request, call_next):
 app.include_router(categories.router, prefix='/categories', tags=['categories'])
 app.include_router(expenses.router, prefix='/expenses', tags=['expenses'])
 app.include_router(users.router, prefix='/users', tags=['users'])
+app.include_router(budgets.router, prefix='/budgets', tags=['budgets'])

@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import create_engine, select, update
+from sqlalchemy import create_engine, select, update, delete
 from sqlalchemy.orm import Session, joinedload
 
 from financesvc.domain.models import Expense, Category, User
@@ -46,6 +46,11 @@ class BaseRepository:
         with self._session as session:
             session.execute(stmt)
 
+    def delete(self, instance, *args, **kwargs):
+        with self._session as session:
+            session.delete(instance)
+            session.commit()
+
 
 class ExpenseRepository(BaseRepository):
     MODEL = Expense
@@ -64,7 +69,14 @@ class ExpenseRepository(BaseRepository):
         return expenses
 
     def get_expense_by_id(self, expense_id: int, user_code: str):
-        pass
+        matched_expense = self.get_one(
+            Expense.id == expense_id,
+            Expense.created_by.has(code=user_code)
+        )
+        return matched_expense
+
+    def delete_expense(self, expense: Expense):
+        self.delete(expense)
 
     def create_expense(
         self,
@@ -100,9 +112,6 @@ class ExpenseRepository(BaseRepository):
         if not expense:
             return
         return
-
-    def delete_expense(self, expense_id):
-        pass
 
 
 class CategoryRepository(BaseRepository):

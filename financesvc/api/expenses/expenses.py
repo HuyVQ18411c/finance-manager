@@ -29,15 +29,22 @@ def get_expenses(request: Request):
     return JSONResponse(status_code=200, content=serialized_data)
 
 
-@router.get('/{expense_id}')
-def delete_expense(request: Request):
-    pass
+@router.delete('/{expense_id}')
+def delete_expense(request: Request, expense_id: int):
+    user_code = request.state.user.code
+    matched_expense = expense_repo.get_expense_by_id(expense_id, user_code)
+    if not matched_expense:
+        return JSONResponse(status_code=400, content={'error': True, 'detail': 'Không tìm thấy chi tiêu.'})
+
+    expense_repo.delete_expense(matched_expense)
+
+    return JSONResponse(status_code=200, content={'success': True})
 
 
 @router.post('/')
 def add_expense(expense_data: ExpenseDto, request: Request):
     if not expense_data.title and not expense_data.amount and not expense_data.category_id:
-        return JSONResponse(status_code=400, content={'error': True, 'detail': 'Missing required data.'})
+        return JSONResponse(status_code=400, content={'error': True, 'detail': 'Dữ liệu không hợp lệ.'})
 
     if expense_data.amount <= 0:
         return JSONResponse(status_code=400, content={'error': True, 'detail': 'Amount can not be smaller than 0.'})

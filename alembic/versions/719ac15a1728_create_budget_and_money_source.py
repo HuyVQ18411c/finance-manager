@@ -1,8 +1,8 @@
 """create budget and money source
 
-Revision ID: 288d0626fde9
+Revision ID: 719ac15a1728
 Revises: c99f99232f8d
-Create Date: 2023-04-11 21:24:14.225088
+Create Date: 2023-04-13 22:38:39.010023
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '288d0626fde9'
+revision = '719ac15a1728'
 down_revision = 'c99f99232f8d'
 branch_labels = None
 depends_on = None
@@ -28,6 +28,7 @@ def upgrade() -> None:
     sa.Column('amount', sa.Float(), nullable=False),
     sa.Column('receive_date', sa.Date(), nullable=False),
     sa.Column('notes', sa.String(length=500), nullable=True),
+    sa.Column('last_updated_date', sa.DateTime(timezone=True), nullable=True),
     sa.Column('created_by_id', sa.Integer(), nullable=True),
     sa.Column('source_id', sa.Integer(), nullable=False),
     sa.Column('created_date', sa.DateTime(), nullable=False),
