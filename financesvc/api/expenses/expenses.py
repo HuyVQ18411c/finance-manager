@@ -4,7 +4,9 @@ from datetime import datetime, timedelta
 from fastapi import APIRouter, Request
 from starlette.responses import JSONResponse
 
+from financesvc.api.budgets.budgets import get_budgets_for_statistic
 from financesvc.api.expenses.dto import ExpenseDto
+from financesvc.domain.models import Expense
 from financesvc.domain.repositories import ExpenseRepository, CategoryRepository
 from financesvc.settings import DB_URL
 from financesvc.utils.serializers import Serializer
@@ -23,7 +25,7 @@ def get_expenses(request: Request):
     serialized_data = Serializer(
         data,
         exclude_fields=EXPENSE_EXCLUDE_FIELDS,
-        include_relationship=True
+        # include_relationship=True
     ).to_representation()
 
     return JSONResponse(status_code=200, content=serialized_data)
@@ -61,10 +63,8 @@ def add_expense(expense_data: ExpenseDto, request: Request):
     )
 
 
-@router.get('/statistic/')
-def get_dashboard(request: Request):
-    user = request.state.user
-    expenses = expense_repo.get_expenses(user.code)
+def get_expenses_for_statistic(user_code: str) -> dict[str, dict]:
+    expenses = expense_repo.get_expenses(user_code)
 
     data = {'bar': {}, 'line': {}, 'pie': {}}
     days = (expenses[-1].spent_date - expenses[0].spent_date).days
@@ -91,5 +91,20 @@ def get_dashboard(request: Request):
 
         # Spent amount by month
         data['bar'][calendar.month_abbr[expense.spent_date.month]] += expense.amount
+
+    return data
+
+
+@router.get('/statistic/')
+def get_dashboard(request: Request):
+    user = request.state.user
+
+    data = {'expenses': {}, 'budgets': {}}
+
+    expense_data = get_expenses_for_statistic(user.code)
+    budget_data = get_budgets_for_statistic(user.code)
+
+    data['expenses'] = expense_data
+    data['budgets'] = budget_data
 
     return JSONResponse(status_code=200, content=data)

@@ -1,9 +1,10 @@
+import logging
 from datetime import datetime
 
 from sqlalchemy import create_engine, select, update, delete
 from sqlalchemy.orm import Session, joinedload
 
-from financesvc.domain.models import Expense, Category, User
+from financesvc.domain.models import Expense, Category, User, Budget, MoneySource
 from financesvc.utils.code_generator import generate_user_code, hash_password
 
 
@@ -13,6 +14,7 @@ class BaseRepository:
     def __init__(self, database_url: str):
         self._engine = create_engine(database_url)
         self._session = Session(self._engine)
+        self.logger = logging.getLogger(self.__class__.__name__)
 
         if not self.MODEL:
             raise AttributeError('No model is set for repository {}'.format(self.__class__.__name__))
@@ -144,3 +146,37 @@ class UserRepository(BaseRepository):
         )
 
         return self.create(new_user)
+
+
+class MoneySourceRepository(BaseRepository):
+    MODEL = MoneySource
+
+    def get_sources(self):
+        return self.get_many()
+
+    def get_source_by_id(self, source_id):
+        return self.get_one(MoneySource.id == source_id)
+
+
+class BudgetRepository(BaseRepository):
+    MODEL = Budget
+
+    def create_budget(self, amount, receive_date, source_id, created_by_id, notes=None) -> Budget:
+        return self.create(Budget(
+            amount=amount,
+            receive_date=receive_date,
+            source_id=source_id,
+            created_by_id=created_by_id,
+            notes=notes
+        ))
+
+    def get_budgets(self, user_code) -> list[Budget]:
+        stmt = select(Budget).options(
+            joinedload(Budget.created_by)
+        ).join(
+            Budget.created_by
+        ).where(
+            User.code == user_code
+        ).order_by(Budget.receive_date)
+
+        return self.get_many(stmt=stmt)

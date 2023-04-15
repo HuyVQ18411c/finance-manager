@@ -24,6 +24,9 @@ class Serializer:
         # Instead of using lazy load, for performance.
         self._include_relationship = include_relationship
 
+        # if not all([include_relationship, relationship_fields]):
+        #     raise ValueError('Missing parameter when serializing objects.')
+
     @property
     def is_model_instance(self):
         if self._is_list and isinstance(self.data[0], Base):
@@ -35,12 +38,18 @@ class Serializer:
         return False
 
     def to_dict(self) -> dict | list[dict]:
-        result = []
+        result = None
         if self.is_model_instance:
             if self._is_list:
-                result = [instance.as_dict() for instance in self.data]
+                if self._include_relationship:
+                    result = [instance.as_dict(True) for instance in self.data]
+                else:
+                    result = [instance.as_dict() for instance in self.data]
             else:
-                result = self.data.as_dict()
+                if self._include_relationship:
+                    result = self.data.as_dict(True)
+                else:
+                    result = self.data.as_dict()
 
         return result
 
@@ -71,7 +80,6 @@ class Serializer:
 
             if self._include_relationship and isinstance(value, Base):
                 data[key] = Serializer(value).to_dict()
-
         return data
 
     def to_representation(self) -> dict | list[dict]:

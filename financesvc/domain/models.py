@@ -10,13 +10,25 @@ class Base(DeclarativeBase):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
 
-    def as_dict(self):
-        return {
-            c.name: getattr(self, c.name)
-            if not isinstance(getattr(self, c.name), datetime)
-            else str(getattr(self, c.name))
-            for c in self.__table__.columns
-        }
+    def as_dict(self, include_relationship=False):
+        data = {}
+        for c in self.__table__.columns:
+            if isinstance(getattr(self, c.name), datetime):
+                data[c.name] = str(getattr(self, c.name))
+
+            elif isinstance(getattr(self, c.name), Base):
+                data[c.name] = getattr(self, c.name).as_dict()
+
+            else:
+                data[c.name] = getattr(self, c.name)
+
+        # This option should only be used with eager loading for performance purpose
+        if include_relationship:
+            for field in self.__mapper__.relationships.items():
+                data[field[0]] = getattr(self, field[0]).as_dict()
+                del data[field[0] + '_id']
+
+        return data
 
 
 class BaseModel(Base):
