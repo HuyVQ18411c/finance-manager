@@ -114,7 +114,7 @@ class Serializer:
 
             elif self.exclude_fields:
                 for row in data:
-                    for field in self.fields:
+                    for field in self.exclude_fields:
                         if field in row.keys():
                             del row[field]
 

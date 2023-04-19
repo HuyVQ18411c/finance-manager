@@ -26,6 +26,7 @@ class Base(DeclarativeBase):
         if include_relationship:
             for field in self.__mapper__.relationships.items():
                 data[field[0]] = getattr(self, field[0]).as_dict()
+                # Remove direct primary key from dictionary
                 del data[field[0] + '_id']
 
         return data

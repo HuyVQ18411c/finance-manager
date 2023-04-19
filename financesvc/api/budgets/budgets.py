@@ -41,7 +41,8 @@ def get_budget(request: Request):
         status_code=200,
         content=Serializer(
             data=budgets,
-            include_relationship=True
+            include_relationship=True,
+            exclude_fields=['created_by']
         ).to_representation()
     )
 
