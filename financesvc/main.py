@@ -44,17 +44,11 @@ async def get_request_user(request: Request, call_next):
         if path in request.url.path:
             break
     else:
-        code = await request.headers['X-Token']
-        if not code:
-            raise HTTPException(status_code=403, detail={'success': False})
-
+        code = request.headers.get('X-Token', '')
         matched_user = user_repo.get_user(code)
-
-        if not matched_user:
-            raise HTTPException(status_code=403, detail={'success': False})
         logger.info('A user %s is using application', code)
-
         request.state.user = matched_user
+
     response = await call_next(request)
     return response
 
